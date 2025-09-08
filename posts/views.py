@@ -1,9 +1,9 @@
 from django.shortcuts import render, HttpResponse
 
 
-def test_view(request):
-    return HttpResponse("Test view is working!")
+def text_view(request):
+    return HttpResponse("Текстовый ответ!")
 
 
-def html_view(request):
+def template_view(request):
     return render(request, "base.html")
