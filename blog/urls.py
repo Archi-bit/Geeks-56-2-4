@@ -18,10 +18,11 @@ Including another URLconf
 from django import template
 from django.contrib import admin
 from django.urls import path
-from posts.views import text_view, template_view
+from posts.views import text_view, template_view, post_list_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('text/', text_view),
-    path('html/', template_view)
+    path('html/', template_view),
+    path('posts/', post_list_view)
 ]
