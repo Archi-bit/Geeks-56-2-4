@@ -12,4 +12,8 @@ def template_view(request):
 
 def post_list_view(request):
     posts = Post.objects.all()
-    return HttpResponse(posts)
+    return render(request, "posts/post_list.html", context={"posts_list": posts})
+
+def post_detail_view(request, pk):
+    post = Post.objects.get(pk=pk)
+    return render(request, "post_detail.html", context={"post": post})

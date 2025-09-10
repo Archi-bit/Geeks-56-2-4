@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Список постов{% endblock %}
+
+{% block content %}
+<h1>Все посты</h1>
+<ul>
+  {% for post in posts %}
+    <li>
+      <b>{{ post.title }}</b> — <a href="/posts/{{ post.id }}/">Читать</a>
+    </li>
+  {% empty %}
+    <li>Постов пока нет.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
