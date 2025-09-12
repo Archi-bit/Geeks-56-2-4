@@ -1,6 +1,7 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect 
 from posts.models import Post
 from django.http import JsonResponse
+from posts.forms import PostForm, PostModelForm
 
 
 def text_view(request):
@@ -8,16 +9,20 @@ def text_view(request):
 
 
 def template_view(request):
-    return render(request, "base.html")
+    if request.method == "GET":
+        return render(request, "base.html")
 
 
 def post_list_view(request):
-    posts = Post.objects.all()
-    return render(request, "posts/post_list.html", context={"posts_list": posts})
+    if request.method == "GET":
+        posts = Post.objects.all()
+        return render(request, "posts/post_list.html", context={"posts_list": posts})
+
 
 def post_detail_view(request, post_id):
-    post = Post.objects.get(id=post_id)
-    return render (request, "posts/post_detail.html", context={'post': post})
+    if request.method == "GET":
+        post = Post.objects.get(id=post_id)
+        return render (request, "posts/post_detail.html", context={'post': post})
 
 
 def post_detail_api(request, post_id):
@@ -35,3 +40,30 @@ def post_detail_api(request, post_id):
         "image": post.image.url if post.image else None,
     }
     return JsonResponse(data)
+
+def post_create_view(request):
+    if request.method == "GET":
+        form = PostForm()
+        return render(request, "posts/post_create.html", context={"form": form})
+    if request.method == "POST":
+        form = PostForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(request, "posts/post_create.html", context={"form": form})
+        elif form.is_valid():
+            title = form.cleaned_data.get("title")
+            content = form.cleaned_data.get("content")
+            image = form.cleaned_data.get("image")
+            post = Post.objects.create(title=title, content=content, image=image)
+            return redirect ("/")
+        
+
+def post_create_modelform_view(request):
+    if request.method == "POST":
+        form = PostModelForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect("post_list")
+    else:
+        form = PostModelForm()
+    
+    return render(request, "posts/post_create_modelform.html", {"form": form})

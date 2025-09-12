@@ -17,10 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from posts.views import (
-    text_view, template_view, post_list_view, post_detail_view,
-    post_detail_api,
-)
+from posts.views import text_view, template_view, post_list_view, post_detail_view, post_create_view, post_detail_api, post_create_modelform_view
 from django.conf.urls.static import static
 from django.conf import settings
 
@@ -30,5 +27,7 @@ urlpatterns = [
     path('', template_view),
     path('posts/', post_list_view, name="post_list"),
     path("posts/<int:post_id>/", post_detail_view, name="post_detail"),
+    path('posts/create/', post_create_view, name="post_create"),
+    path("posts/create-modelform/", post_create_modelform_view, name="post_create_modelform"),
     path("api/posts/<int:post_id>/", post_detail_api, name="post_detail_api"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
