@@ -1,16 +1,21 @@
 {% extends "base.html" %}
-
-{% block title %}Список постов{% endblock %}
+{% load static %}
 
 {% block content %}
-<h1>Все посты</h1>
-<ul>
-  {% for post in posts %}
-    <li>
-      <b>{{ post.title }}</b> — <a href="/posts/{{ post.id }}/">Читать</a>
-    </li>
-  {% empty %}
-    <li>Постов пока нет.</li>
-  {% endfor %}
-</ul>
+{% for post in posts_list %}
+<div class="card" style="width: 18rem; margin-top: 10px;">
+  {% if post.image %}
+    <img src="{{post.image.url}}" class="card-img-top" alt="...">
+  {% else %}
+  <img src="{% static 'placeholder.png' %}" class="card-img-top" alt="...">
+  {% endif %}
+  <div class="card-body">
+    <h5 class="card-title">{{post.title}}</h5>
+    <p class="card-text">{{post.content}}</p>
+    <p class="card-text">{{post.rate}}</p>
+    <p class="card-text">{{post.created_at}}</p>
+    <a href="/posts/{{post.id}}/" class="btn btn-primary">Go to post</a>
+  </div>
+</div>
+{% endfor %}
 {% endblock %}
