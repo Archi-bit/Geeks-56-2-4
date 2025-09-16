@@ -20,8 +20,13 @@ from django.urls import path
 from posts.views import text_view, template_view, post_list_view, post_detail_view, post_create_view, post_detail_api, post_create_modelform_view
 from django.conf.urls.static import static
 from django.conf import settings
+from users.views import register_view, login_view, logout_view
 
-urlpatterns = [
+users_patterns = [
+    path("register/", register_view), path("login/", login_view,), path("logout/", logout_view)
+]
+
+urlpatterns = users_patterns + [
     path('admin/', admin.site.urls),
     path('text/', text_view),
     path('', template_view),
