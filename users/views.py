@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from users.forms import LoginForm, RegisterForm
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
 
 def register_view(request):
     if request.method == "GET":
@@ -33,6 +34,7 @@ def login_view(request):
                 login(request, user)
                 return redirect("/")
             
+@login_required(login_url="/login/")
 def logout_view(request):
     logout(request)
     return redirect("/")

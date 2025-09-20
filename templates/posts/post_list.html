@@ -2,6 +2,10 @@
 {% load static %}
 
 {% block content %}
+<form method="get" action="" enctype="multipart/form-data">
+    {{form.as_p}}
+    <button type="submit">Search</button>
+</form>
 {% for post in posts_list %}
 <div class="card" style="width: 18rem; margin-top: 10px;">
   {% if post.image %}
@@ -18,4 +22,11 @@
   </div>
 </div>
 {% endfor %}
+  <div style="display: flex; justify-content: center; margin-top: 20px; margin-bottom: 20px;">
+    {% for i in max_pages %}
+      <a href="/posts/?page={{ i }}" class="btn btn-primary">
+        {{ i }}
+      </a>
+    {% endfor %}
+  </div>
 {% endblock %}

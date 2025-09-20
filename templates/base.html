@@ -9,15 +9,15 @@
       aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      {% if request.user.is_authenticated %}
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item"><a class="nav-link active" href="/posts/">Posts</a></li>
         <li class="nav-item"><a class="nav-link active" href="/posts/create/">Create Posts</a></li>
       </ul>
-
+      {% endif %}
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-        {% if user.is_authenticated %}
+        {% if request.user.is_authenticated %}
           <li class="nav-item"><a class="nav-link" href="/logout/">Logout</a></li>
         {% else %}
           <li class="nav-item"><a class="nav-link" href="/register/">Register</a></li>
@@ -30,5 +30,9 @@
 </head>
 <body>
     {% block content %}
+    <div class="container mt-5 text-center">
+        <h1>Добро пожаловать в мой первый сайт-блог!</h1>
+        <p>Здесь вы можете читать и создавать посты.</p>
+    </div>
     {% endblock %}
 </body>
