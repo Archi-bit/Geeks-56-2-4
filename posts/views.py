@@ -1,100 +1,105 @@
-from django.shortcuts import render, HttpResponse, redirect 
-from posts.models import Post
-from django.http import JsonResponse
-from posts.forms import PostForm, PostModelForm, SearchForm
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, DetailView
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from posts.models import Post, Category
+from users.models import Profile
+from django.views.generic import TemplateView
 from django.db.models import Q
 
 
 
+class PostListView(ListView):
+    model = Post
+    template_name = "posts/post_list.html"
+    context_object_name = "posts"
+    ordering = ["-created_at"]
+    paginate_by = 3
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.GET.get("search", "")
+        category_id = self.request.GET.get("category", "")
+        order = self.request.GET.get("order", "")
 
-def text_view(request):
-    return HttpResponse("Текстовый ответ!")
-
-
-def template_view(request):
-    if request.method == "GET":
-        return render(request, "base.html")
-
-@login_required(login_url="/login/")
-def post_list_view(request):
-    posts = Post.objects.all()
-    limit = 3
-    if request.method == "GET":
-        search = request.GET.get("search")
-        category_id = request.GET.get("category_id")
-        ordering = request.GET.get("ordering")
-        page = int(request.GET.get("page", 1))
         if search:
-            posts = posts.filter(Q(title__icontains=search) | Q(content__icontains=search))
+            queryset = queryset.filter(
+                Q(title__icontains=search) | Q(content__icontains=search)
+            )
+
         if category_id:
-            posts = posts.filter(category_id=category_id)
-        if ordering:
-            posts = posts.order_by(ordering)
-        if page:
-            max_pages = posts.count() / limit
-            if round(max_pages) < max_pages:
-                max_pages = round(max_pages) + 1
-            elif round(max_pages) > max_pages:
-                max_pages = round(max_pages)
-            start = (page - 1) * limit 
-            end = page * limit
-            posts = posts[start:end]
-        form = SearchForm()
-        return render(
-            request, 
-            "posts/post_list.html", 
-            context={"posts_list": posts, "form": form, "max_pages": range(1, max_pages + 1)},
-        )
+            queryset = queryset.filter(category__id=category_id)
 
-@login_required(login_url="/login/")
-def post_detail_view(request, post_id):
-    if request.method == "GET":
-        post = Post.objects.get(id=post_id)
-        return render (request, "posts/post_detail.html", context={'post': post})
+        if order == "rate":
+            queryset = queryset.order_by("-rate")
+        elif order == "created":
+            queryset = queryset.order_by("-created_at")
+        elif order == "title":
+            queryset = queryset.order_by("title")
+        else:
+            queryset = queryset.order_by("-created_at")
 
-@login_required(login_url="/login/")
-def post_detail_api(request, post_id):
-    from .models import Post
-    post = Post.objects.get(id=post_id)
-    data = {
-        "id": post.id,
-        "title": post.title,
-        "content": post.content,
-        "rate": post.rate,
-        "created_at": post.created_at,
-        "updated_at": post.updated_at,
-        "category": post.category.name if post.category else None,
-        "tags": [tag.name for tag in post.tags.all()],
-        "image": post.image.url if post.image else None,
-    }
-    return JsonResponse(data)
+        return queryset
 
-@login_required(login_url="/login/")
-def post_create_view(request):
-    if request.method == "GET":
-        form = PostForm()
-        return render(request, "posts/post_create.html", context={"form": form})
-    if request.method == "POST":
-        form = PostForm(request.POST, request.FILES)
-        if not form.is_valid():
-            return render(request, "posts/post_create.html", context={"form": form})
-        elif form.is_valid():
-            title = form.cleaned_data.get("title")
-            content = form.cleaned_data.get("content")
-            image = form.cleaned_data.get("image")
-            post = Post.objects.create(title=title, content=content, image=image)
-            return redirect ("/")
-        
-@login_required(login_url="/login/")
-def post_create_modelform_view(request):
-    if request.method == "POST":
-        form = PostModelForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect("post_list")
-    else:
-        form = PostModelForm()
-    
-    return render(request, "posts/post_create_modelform.html", {"form": form})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["categories"] = Category.objects.all()
+        context["search"] = self.request.GET.get("search", "")
+        context["selected_category"] = self.request.GET.get("category", "")
+        context["order"] = self.request.GET.get("order", "")
+        return context
+
+
+class PostDetailView(DetailView):
+    model = Post
+    template_name = "posts/post_detail.html"
+    context_object_name = "post"
+
+
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    template_name = "posts/post_form.html"
+    fields = ["title", "content", "image"]
+    success_url = reverse_lazy("post_list")
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Post
+    template_name = "posts/post_form.html"
+    fields = ["title", "content", "image", "rate", "category", "tags"]
+    success_url = reverse_lazy("post_list")
+
+    def test_func(self):
+        post = self.get_object()
+        return post.author == self.request.user
+
+
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Post
+    template_name = "posts/post_confirm_delete.html"
+    success_url = reverse_lazy("post_list")
+
+    def test_func(self):
+        post = self.get_object()
+        return post.author == self.request.user
+
+
+class ProfileView(LoginRequiredMixin, DetailView):
+    model = Profile
+    template_name = "users/profile.html"
+    context_object_name = "profile"
+
+    def get_object(self):
+        return Profile.objects.get(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["posts"] = Post.objects.filter(author=self.request.user)
+        return context
+
+class HomeView(TemplateView):
+    template_name = "base.html"

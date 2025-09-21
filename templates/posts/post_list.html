@@ -2,31 +2,60 @@
 {% load static %}
 
 {% block content %}
-<form method="get" action="" enctype="multipart/form-data">
-    {{form.as_p}}
-    <button type="submit">Search</button>
+<h1>All Posts</h1>
+
+<!-- Форма поиска и фильтры -->
+<form method="get" class="mb-3 d-flex gap-2">
+    <input type="text" name="search" placeholder="Search title/content" value="{{ search }}" class="form-control">
+    
+    <select name="category" class="form-select">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
+                {{ cat.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <select name="order" class="form-select">
+        <option value="">Sort by...</option>
+        <option value="created" {% if order == "created" %}selected{% endif %}>Date</option>
+        <option value="rate" {% if order == "rate" %}selected{% endif %}>Rate</option>
+        <option value="title" {% if order == "title" %}selected{% endif %}>Title</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary">Search</button>
 </form>
-{% for post in posts_list %}
+
+<!-- Посты -->
+{% for post in posts %}
 <div class="card" style="width: 18rem; margin-top: 10px;">
-  {% if post.image %}
-    <img src="{{post.image.url}}" class="card-img-top" alt="...">
-  {% else %}
-  <img src="{% static 'placeholder.png' %}" class="card-img-top" alt="...">
-  {% endif %}
-  <div class="card-body">
-    <h5 class="card-title">{{post.title}}</h5>
-    <p class="card-text">{{post.content}}</p>
-    <p class="card-text">{{post.rate}}</p>
-    <p class="card-text">{{post.created_at}}</p>
-    <a href="/posts/{{post.id}}/" class="btn btn-primary">Go to post</a>
-  </div>
+    {% if post.image %}
+        <img src="{{ post.image.url }}" class="card-img-top" alt="...">
+    {% else %}
+        <img src="{% static 'placeholder.png' %}" class="card-img-top" alt="...">
+    {% endif %}
+    <div class="card-body">
+        <h5 class="card-title">{{ post.title }}</h5>
+        <p class="card-text">{{ post.content }}</p>
+        <p class="card-text">{{ post.rate }}</p>
+        <p class="card-text">{{ post.created_at }}</p>
+        <a href="{% url 'post_detail' post.pk %}" class="btn btn-primary">View</a>
+    </div>
 </div>
+{% empty %}
+<p>No posts found.</p>
 {% endfor %}
-  <div style="display: flex; justify-content: center; margin-top: 20px; margin-bottom: 20px;">
-    {% for i in max_pages %}
-      <a href="/posts/?page={{ i }}" class="btn btn-primary">
-        {{ i }}
-      </a>
-    {% endfor %}
-  </div>
+
+<!-- пагинация по центру -->
+<div class="d-flex justify-content-center mt-4">
+  {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+      <a class="btn btn-primary m-1" style="width:40px;" href="?page={{ num }}&search={{ search }}&category={{ selected_category }}&order={{ order }}">{{ num }}</a>
+    {% else %}
+      <a class="btn btn-outline-primary m-1" style="width:40px;" href="?page={{ num }}&search={{ search }}&category={{ selected_category }}&order={{ order }}">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+</div>
+
 {% endblock %}
